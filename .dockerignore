@@ -1,0 +1,19 @@
+.__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache
+.pytest_cache
+.venv
+venv
+env
+.coverage
+htmlcov
+.git
+.gitignore
+node_modules
+__pypackages__
+*.ipynb_checkpoints
+reference.ipynb
+ tests/

@@ -164,3 +164,71 @@ This project deserves more attention, but I'm struggling to free up time sometim
 ## Donations
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/cyberjunkynl/)
+
+## Run as a Dockerized Web API
+
+This repository includes a minimal FastAPI web server that exposes a subset of endpoints and auto-generates Swagger docs.
+
+- API base: `http://localhost:8000`
+- Swagger UI: `http://localhost:8000/docs`
+- Health check: `GET /healthz`
+
+Build the container:
+
+```bash
+docker build -t garminconnect-api .
+```
+
+Run the container (persist tokens in a local folder so you can avoid logging in every restart):
+
+```bash
+mkdir -p ~/.garminconnect
+docker run --rm -p 8000:8000 \
+  -v $HOME/.garminconnect:/data \
+  -e GARMINTOKENS=/data/.garminconnect \
+  --name garminconnect-api \
+  garminconnect-api
+```
+
+Authenticate:
+
+1) Try to use existing tokens (if mounted via `GARMINTOKENS`). If none found, do email/password login:
+
+```bash
+curl -X POST http://localhost:8000/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"your-password","return_on_mfa":true}'
+```
+
+- If response is `{ "status": "ok" }`, you are ready.
+- If response is `{ "status": "needs_mfa", "client_state": {...} }`, continue with step 2.
+
+2) Complete MFA:
+
+```bash
+curl -X POST http://localhost:8000/login/resume \
+  -H 'Content-Type: application/json' \
+  -d '{"client_state": {..from previous step..}, "mfa_code": "123456"}'
+```
+
+Call endpoints:
+
+- Who am I
+```bash
+curl http://localhost:8000/whoami
+```
+
+- User summary for a date
+```bash
+curl 'http://localhost:8000/summary?cdate=2024-11-10'
+```
+
+- Activities list
+```bash
+curl 'http://localhost:8000/activities?start=0&limit=10'
+```
+
+- Download activity (returns base64 payload)
+```bash
+curl 'http://localhost:8000/activities/1234567890/download?fmt=TCX'
+```
